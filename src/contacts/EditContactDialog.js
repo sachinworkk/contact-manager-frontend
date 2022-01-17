@@ -1,16 +1,14 @@
 import { useState } from "react";
 
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import MenuItem from "@mui/material/MenuItem";
 import TextField from "@mui/material/TextField";
-import InputLabel from "@mui/material/InputLabel";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 
-export default function AddContactDialog(props) {
+export default function EditContactDialog(props) {
   const [contactInfo, setContactInfo] = useState({
     phone: [{ contactNumber: "", numberType: "" }],
     name: "",
@@ -84,7 +82,7 @@ export default function AddContactDialog(props) {
   return (
     <div>
       <Dialog open={props.isOpened} onClose={onDialogClose}>
-        <DialogTitle>Create Contact</DialogTitle>
+        <DialogTitle>Edit Contact</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
@@ -122,17 +120,7 @@ export default function AddContactDialog(props) {
 
           {contactInfo.phone.map((x, i) => {
             return (
-              <Box
-                sx={{
-                  border: 1,
-                  padding: 2,
-                  borderRadius: 1,
-                  borderColor: "grey.500",
-                  marginBottom: "10px",
-                  marginTop: "14px",
-                }}
-                key={i + "box"}
-              >
+              <div className="box">
                 <TextField
                   margin="none"
                   id="contactNumber"
@@ -141,9 +129,7 @@ export default function AddContactDialog(props) {
                   type="text"
                   fullWidth
                   variant="standard"
-                  sx={{ marginBottom: "10px" }}
                   onChange={(e) => handleContactListChange(e, i)}
-                  key={i + "contactNumber"}
                 />
 
                 <TextField
@@ -156,7 +142,6 @@ export default function AddContactDialog(props) {
                   label="Contact type"
                   helperText="Please select the contact type"
                   variant="filled"
-                  key={i + "phone"}
                 >
                   {props.contactNumbersType.map((contactNumberType) => (
                     <MenuItem key={contactNumberType} value={contactNumberType}>
@@ -165,47 +150,28 @@ export default function AddContactDialog(props) {
                   ))}
                 </TextField>
 
-                {contactInfo.phone.length !== 1 && (
-                  <Button
-                    key={i + "removeButton"}
-                    className="mr10"
-                    onClick={() => handleRemoveClick(i)}
-                  >
-                    Remove
-                  </Button>
-                )}
-                {contactInfo.phone.length - 1 === i && (
-                  <Button key={i + "addButton"} onClick={handleAddClick}>
-                    Add
-                  </Button>
-                )}
-              </Box>
+                <div className="btn-box">
+                  {contactInfo.phone.length !== 1 && (
+                    <Button
+                      className="mr10"
+                      onClick={() => handleRemoveClick(i)}
+                    >
+                      Remove
+                    </Button>
+                  )}
+                  {contactInfo.phone.length - 1 === i && (
+                    <Button onClick={handleAddClick}>Add</Button>
+                  )}
+                </div>
+              </div>
             );
           })}
-
-          <InputLabel
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              marginBottom: "10px",
-            }}
-          >
-            Please select a contact image
-          </InputLabel>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              marginLeft: "80px",
-            }}
-          >
-            <input type="file" onChange={fileSelectHandler} className="" />
-          </Box>
         </DialogContent>
 
+        <input type="file" onChange={fileSelectHandler} />
         <DialogActions>
           <Button onClick={onDialogClose}>Cancel</Button>
-          <Button onClick={handleCreate}>Create</Button>
+          <Button onClick={handleCreate}>Edit</Button>
         </DialogActions>
       </Dialog>
     </div>

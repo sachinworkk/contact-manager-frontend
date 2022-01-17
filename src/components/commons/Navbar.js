@@ -27,7 +27,9 @@ export default function Navbar() {
         <ul className={classes.list}>
           <li className={classes.items}>Home</li>
           <li className={classes.items}>Services</li>
-          <li className={classes.items}>Contact</li>
+          <li className={classes.items} onClick={() => logOut()}>
+            Contact
+          </li>
         </ul>
       )}
 
