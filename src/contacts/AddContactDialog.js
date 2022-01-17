@@ -10,9 +10,9 @@ import DialogContent from "@mui/material/DialogContent";
 
 export default function AddContactDialog(props) {
   const [contactInfo, setContactInfo] = useState({
-    phone: [{ contactNumber: "", contactNumberType: "" }],
+    phone: [{ contactNumber: "", numberType: "" }],
     name: "",
-    photograph: "https://picsum.photos/200/300",
+    photograph: null,
     address: "",
     email: "",
   });
@@ -29,11 +29,16 @@ export default function AddContactDialog(props) {
     const list = {
       ...contactInfo,
       phone: [...contactInfo.phone],
-      photograph: "https://picsum.photos/200/300",
     };
     list.phone[index][name] = value;
 
     setContactInfo(list);
+  };
+
+  const fileSelectHandler = (event) => {
+    const file = event.target.files[0];
+
+    setContactInfo({ ...contactInfo, photograph: file });
   };
 
   // handle click event of the Remove button
@@ -48,10 +53,7 @@ export default function AddContactDialog(props) {
   const handleAddClick = () => {
     setContactInfo({
       ...contactInfo,
-      phone: [
-        ...contactInfo.phone,
-        { contactNumber: "", contactNumberType: "" },
-      ],
+      phone: [...contactInfo.phone, { contactNumber: "", numberType: "" }],
     });
   };
 
@@ -71,7 +73,7 @@ export default function AddContactDialog(props) {
 
   const resetData = () => {
     setContactInfo({
-      phone: [{ contactNumber: "", contactNumberType: "" }],
+      phone: [{ contactNumber: "", numberType: "" }],
       name: "",
       photograph: "",
       address: "",
@@ -137,7 +139,7 @@ export default function AddContactDialog(props) {
                   select
                   fullWidth
                   defaultValue="PHONE"
-                  name="contactNumberType"
+                  name="numberType"
                   onChange={(e) => handleContactListChange(e, i)}
                   label="Contact type"
                   helperText="Please select the contact type"
@@ -167,6 +169,8 @@ export default function AddContactDialog(props) {
             );
           })}
         </DialogContent>
+
+        <input type="file" onChange={fileSelectHandler} />
         <DialogActions>
           <Button onClick={onDialogClose}>Cancel</Button>
           <Button onClick={handleCreate}>Create</Button>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import axios from "axios";
 
 import Contact from "./Contact";
 import AddContactDialog from "./AddContactDialog";
@@ -8,6 +9,7 @@ import FloatingActionButton from "../commons/FloatingActionButton";
 
 import Grid from "@mui/material/Grid";
 import Container from "@mui/material/Container";
+import CircularProgress from "@mui/material/CircularProgress";
 
 export default function ContactMainPage() {
   const [contacts, setContacts] = useState([]);
@@ -57,41 +59,62 @@ export default function ContactMainPage() {
   };
 
   const onCreateContact = (contactInfo) => {
-    fetch("http://localhost:8081/contacts", {
-      method: "POST",
-      body: JSON.stringify(contactInfo),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    const fd = new FormData();
+
+    fd.append("photograph", contactInfo.photograph);
+    fd.append("phone", JSON.stringify(contactInfo.phone));
+    fd.append("name", contactInfo.name);
+    fd.append("address", contactInfo.address);
+    fd.append("email", contactInfo.email);
+
+    axios
+      .post("http://localhost:8081/contacts", fd, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+      .then((res) => {
+        console.log(res);
+      });
 
     toggleAddContactDialogBox(false);
+
+    fetchAndSetContacts();
+    fetchAndSetContactNumbersType();
   };
 
   return (
     <div>
       <Navbar />
-
-      <Container sx={{ marginTop: 5 }}>
-        <Grid container spacing={2}>
-          {contacts.map((contact) => (
-            <Contact
-              key={contact._id}
-              image={contact?.photograph || ""}
-              userName={contact?.name || ""}
-              displayedContactNumber={contact?.phone[0]?.contactNumber || ""}
-            ></Contact>
-          ))}
-        </Grid>
-      </Container>
-
+      {isContactsLoading ? (
+        <CircularProgress
+          sx={{
+            position: "absolute",
+            left: "50%",
+            top: "50%",
+            transform: "translate(-50%, -50%)",
+          }}
+        />
+      ) : (
+        <Container sx={{ marginTop: 5 }}>
+          <Grid container spacing={2}>
+            {contacts.map((contact) => (
+              <Contact
+                key={contact._id}
+                image={contact?.photograph || ""}
+                userName={contact?.name || ""}
+                displayedContactNumber={contact?.phone[0]?.contactNumber || ""}
+              ></Contact>
+            ))}
+          </Grid>
+        </Container>
+      )}
       <AddContactDialog
         handleClose={onCloseContactDialog}
         contactNumbersType={contactNumbersType}
         handleSubmit={onCreateContact}
         isOpened={isAddDialogBoxOpened}
       />
-
       <FloatingActionButton onFloatingButtonClick={onFloatingButton} />
     </div>
   );
