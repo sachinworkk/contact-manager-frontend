@@ -3,6 +3,7 @@ import axios from "axios";
 
 import Contact from "./Contact";
 import AddContactDialog from "./AddContactDialog";
+import EditContactDialog from "./EditContactDialog";
 
 import Navbar from "../commons/Navbar";
 import FloatingActionButton from "../commons/FloatingActionButton";
@@ -11,54 +12,55 @@ import Grid from "@mui/material/Grid";
 import Container from "@mui/material/Container";
 import CircularProgress from "@mui/material/CircularProgress";
 
+import config from "../config";
+
+import {
+  fetchAllContacts,
+  fetchAllContactsType,
+  postContact,
+} from "../services/contacts";
+
 export default function ContactMainPage() {
   const [contacts, setContacts] = useState([]);
   const [contactNumbersType, setContactNumbersType] = useState([]);
-  const [isContactsLoading, setLoading] = useState(true);
+  const [isContactsLoading, setLoading] = useState(false);
   const [isAddDialogBoxOpened, toggleAddContactDialogBox] = useState(false);
+  const [isEditDialogBoxOpened, toggleEditContactDialogBox] = useState(false);
 
   useEffect(() => {
     fetchAndSetContacts();
     fetchAndSetContactNumbersType();
   }, []);
 
-  const fetchAndSetContacts = () => {
-    fetch("http://localhost:8081/contacts/")
-      .then((res) => res.json())
-      .then(
-        (contacts) => {
-          setLoading(false);
-          setContacts(contacts);
-        },
-        (error) => {
-          console.log(error);
-        }
-      );
+  const fetchAndSetContacts = async () => {
+    setLoading(true);
+
+    try {
+      const contacts = await fetchAllContacts();
+
+      setContacts(contacts);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const fetchAndSetContactNumbersType = () => {
-    fetch("http://localhost:8081/contacts/numbers/type")
-      .then((res) => res.json())
-      .then(
-        (contactNumbersType) => {
-          setLoading(false);
-          setContactNumbersType(contactNumbersType.contactNumbersType);
-        },
-        (error) => {
-          console.log(error);
-        }
-      );
+  const fetchAndSetContactNumbersType = async () => {
+    setLoading(true);
+
+    try {
+      const { contactNumbersType } = await fetchAllContactsType();
+
+      setContactNumbersType(contactNumbersType);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const onFloatingButton = () => {
-    toggleAddContactDialogBox(true);
-  };
-
-  const onCloseContactDialog = () => {
-    toggleAddContactDialogBox(false);
-  };
-
-  const onCreateContact = (contactInfo) => {
+  const onCreateContact = async (contactInfo) => {
     const fd = new FormData();
 
     fd.append("photograph", contactInfo.photograph);
@@ -67,20 +69,33 @@ export default function ContactMainPage() {
     fd.append("address", contactInfo.address);
     fd.append("email", contactInfo.email);
 
-    axios
-      .post("http://localhost:8081/contacts", fd, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      })
-      .then((res) => {
-        console.log(res);
-      });
+    try {
+      await postContact(fd);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(true);
 
+      fetchAndSetContacts();
+      fetchAndSetContactNumbersType();
+      toggleAddContactDialogBox(false);
+    }
+  };
+
+  const openAddContactDialog = () => {
+    toggleAddContactDialogBox(true);
+  };
+
+  const openEditContactDialog = () => {
+    toggleEditContactDialogBox(true);
+  };
+
+  const onCloseContactDialog = () => {
     toggleAddContactDialogBox(false);
+  };
 
-    fetchAndSetContacts();
-    fetchAndSetContactNumbersType();
+  const onCloseEditContactDialog = () => {
+    toggleEditContactDialogBox(false);
   };
 
   return (
@@ -101,9 +116,10 @@ export default function ContactMainPage() {
             {contacts.map((contact) => (
               <Contact
                 key={contact._id}
-                image={contact?.photograph || ""}
+                image={config.apiBaseUrl + contact?.photograph || ""}
                 userName={contact?.name || ""}
                 displayedContactNumber={contact?.phone[0]?.contactNumber || ""}
+                onEdit={openEditContactDialog}
               ></Contact>
             ))}
           </Grid>
@@ -115,7 +131,14 @@ export default function ContactMainPage() {
         handleSubmit={onCreateContact}
         isOpened={isAddDialogBoxOpened}
       />
-      <FloatingActionButton onFloatingButtonClick={onFloatingButton} />
+
+      <EditContactDialog
+        handleClose={onCloseEditContactDialog}
+        contactNumbersType={contactNumbersType}
+        handleSubmit={onCreateContact}
+        isOpened={isEditDialogBoxOpened}
+      />
+      <FloatingActionButton onFloatingButtonClick={openAddContactDialog} />
     </div>
   );
 }

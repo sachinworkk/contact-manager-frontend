@@ -34,7 +34,7 @@ export default function Contact(props) {
           </Typography>
         </CardContent>
         <CardActions sx={{ justifyContent: "space-around" }}>
-          <IconButton>
+          <IconButton onClick={props.onEdit}>
             <EditIcon />
           </IconButton>
 
