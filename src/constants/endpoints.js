@@ -1,6 +1,6 @@
 const endpoints = {
   login: "/login",
-  CONTACTS: "/contacts",
+  CONTACTS: "/contacts/",
   CONTACTS_TYPE: "/contacts/numbers/type",
 };
 

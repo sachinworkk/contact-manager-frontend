@@ -168,12 +168,6 @@ export default function AddContactDialog(props) {
 
   const onDialogClose = () => {
     props.handleClose();
-
-    resetData();
-  };
-
-  const resetData = () => {
-    window.location.reload();
   };
 
   useEffect(handleContactListValidation, [contactInfo]);

@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
+import { useState, useEffect, useRef } from "react";
 
 import Contact from "./Contact";
 import AddContactDialog from "./AddContactDialog";
@@ -15,6 +14,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import config from "../config";
 
 import {
+  editContact,
   fetchAllContacts,
   fetchAllContactsType,
   postContact,
@@ -22,6 +22,9 @@ import {
 
 export default function ContactMainPage() {
   const [contacts, setContacts] = useState([]);
+
+  const editDialogId = useRef("");
+
   const [contactNumbersType, setContactNumbersType] = useState([]);
   const [isContactsLoading, setLoading] = useState(false);
   const [isAddDialogBoxOpened, toggleAddContactDialogBox] = useState(false);
@@ -82,11 +85,43 @@ export default function ContactMainPage() {
     }
   };
 
+  const onEditContact = async (contactInfo, id) => {
+    const fd = new FormData();
+
+    fd.append("photograph", contactInfo.photograph);
+    fd.append(
+      "phone",
+      JSON.stringify(
+        contactInfo.phone.map((phone) => ({
+          contactNumber: phone.contactNumber,
+          contactNumberType: phone.contactNumberType,
+        }))
+      )
+    );
+    fd.append("name", contactInfo.name);
+    fd.append("address", contactInfo.address);
+    fd.append("email", contactInfo.email);
+
+    try {
+      await editContact(fd, id);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(true);
+
+      fetchAndSetContacts();
+      fetchAndSetContactNumbersType();
+      toggleEditContactDialogBox(false);
+    }
+  };
+
   const openAddContactDialog = () => {
     toggleAddContactDialogBox(true);
   };
 
-  const openEditContactDialog = () => {
+  const openEditContactDialog = (id) => {
+    editDialogId.current = id;
+
     toggleEditContactDialogBox(true);
   };
 
@@ -119,25 +154,32 @@ export default function ContactMainPage() {
                 image={config.apiBaseUrl + contact?.photograph || ""}
                 userName={contact?.name || ""}
                 displayedContactNumber={contact?.phone[0]?.contactNumber || ""}
-                onEdit={openEditContactDialog}
+                onEdit={() => openEditContactDialog(contact._id)}
               ></Contact>
             ))}
           </Grid>
         </Container>
       )}
-      <AddContactDialog
-        handleClose={onCloseContactDialog}
-        contactNumbersType={contactNumbersType}
-        handleSubmit={onCreateContact}
-        isOpened={isAddDialogBoxOpened}
-      />
 
-      <EditContactDialog
-        handleClose={onCloseEditContactDialog}
-        contactNumbersType={contactNumbersType}
-        handleSubmit={onCreateContact}
-        isOpened={isEditDialogBoxOpened}
-      />
+      {isAddDialogBoxOpened ? (
+        <AddContactDialog
+          handleClose={onCloseContactDialog}
+          contactNumbersType={contactNumbersType}
+          handleSubmit={onCreateContact}
+          isOpened={isAddDialogBoxOpened}
+        />
+      ) : null}
+
+      {isEditDialogBoxOpened ? (
+        <EditContactDialog
+          handleClose={onCloseEditContactDialog}
+          contactId={editDialogId}
+          contactNumbersType={contactNumbersType}
+          handleEdit={onEditContact}
+          isOpened={isEditDialogBoxOpened}
+        />
+      ) : null}
+
       <FloatingActionButton onFloatingButtonClick={openAddContactDialog} />
     </div>
   );
