@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -19,10 +19,34 @@ export default function AddContactDialog(props) {
     email: "",
   });
 
+  const [contactInfoErrors, setErrors] = useState({
+    phone: [{ contactNumber: "", numberType: "" }],
+    name: "",
+    photograph: "",
+    address: "",
+    email: "",
+  });
+
+  const [isFormValid, setIsFormValid] = useState(false);
+
+  const isInitialMount = useRef(true);
+
+  const isStringEmpty = (value) => {
+    return !value || value.length === 0;
+  };
+
+  const validateEmail = (email) => {
+    const re =
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
+  };
+
   const handleContactInformationChange = (e) => {
     const { name, value } = e.target;
 
     setContactInfo({ ...contactInfo, [name]: value });
+
+    handleValidation(name, value);
   };
 
   // handle input change
@@ -37,10 +61,71 @@ export default function AddContactDialog(props) {
     setContactInfo(list);
   };
 
+  const handleValidation = (fieldName, value) => {
+    const isValueEmpty = isStringEmpty(value);
+
+    let errorMessage = "";
+
+    if (isValueEmpty) {
+      switch (fieldName) {
+        case "name":
+          errorMessage = "Name is empty";
+          break;
+        case "photograph":
+          errorMessage = "Contact Image is empty";
+          break;
+        case "address":
+          errorMessage = "Address is empty";
+          break;
+        default:
+          errorMessage = "Email is empty";
+      }
+    }
+
+    if (fieldName === "email" && !isValueEmpty) {
+      const isEmailValid = validateEmail(value);
+
+      if (!isEmailValid) {
+        errorMessage = "Not a valid email address";
+      }
+    }
+
+    setErrors((prevError) => ({ ...prevError, [fieldName]: errorMessage }));
+  };
+
+  const handleContactListValidation = () => {
+    const { phone } = contactInfo;
+
+    const contactListValidation = phone.map((phone) =>
+      isStringEmpty(phone.contactNumber)
+        ? { ...phone, contactNumber: "Contact Number is empty" }
+        : { ...phone, contactNumber: "" }
+    );
+
+    setErrors((prevErrors) => ({
+      ...prevErrors,
+      phone: contactListValidation,
+    }));
+  };
+
+  const checkIsFormValid = () => {
+    const isValid = Object.entries(contactInfoErrors)
+      .filter(([key, value]) => key !== "phone")
+      .every(([key, value]) => isStringEmpty(value));
+
+    const isContactListValid = contactInfoErrors.phone.every((phone) =>
+      isStringEmpty(phone.contactNumber)
+    );
+
+    setIsFormValid(isValid && isContactListValid);
+  };
+
   const fileSelectHandler = (event) => {
-    const file = event.target.files[0];
+    const file = event?.target?.files[0];
 
     setContactInfo({ ...contactInfo, photograph: file });
+
+    handleValidation("photograph", file?.name || null);
   };
 
   // handle click event of the Remove button
@@ -53,16 +138,32 @@ export default function AddContactDialog(props) {
 
   // handle click event of the Add button
   const handleAddClick = () => {
+    const list = [...contactInfo.phone, { contactNumber: "", numberType: "" }];
+
     setContactInfo({
       ...contactInfo,
-      phone: [...contactInfo.phone, { contactNumber: "", numberType: "" }],
+      phone: list,
+    });
+  };
+
+  const validateAllFields = () => {
+    Object.entries(contactInfo).forEach(([key, value]) => {
+      if (key === "phone") {
+        handleContactListValidation();
+      } else if (key === "photograph") {
+        handleValidation(key, value?.name || value);
+      } else {
+        handleValidation(key, value);
+      }
     });
   };
 
   const handleCreate = () => {
-    props.handleSubmit(contactInfo);
+    validateAllFields();
 
-    resetData();
+    if (isFormValid) {
+      props.handleSubmit(contactInfo);
+    }
   };
 
   const onDialogClose = () => {
@@ -72,14 +173,18 @@ export default function AddContactDialog(props) {
   };
 
   const resetData = () => {
-    setContactInfo({
-      phone: [{ contactNumber: "", numberType: "" }],
-      name: "",
-      photograph: "",
-      address: "",
-      email: "",
-    });
+    window.location.reload();
   };
+
+  useEffect(handleContactListValidation, [contactInfo]);
+
+  useEffect(
+    () =>
+      isInitialMount.current
+        ? (isInitialMount.current = false)
+        : checkIsFormValid(),
+    [contactInfo, contactInfoErrors]
+  );
 
   return (
     <div>
@@ -96,6 +201,12 @@ export default function AddContactDialog(props) {
             fullWidth
             variant="standard"
             onChange={handleContactInformationChange}
+            error={!isStringEmpty(contactInfoErrors?.name)}
+            helperText={
+              !isStringEmpty(contactInfoErrors?.name)
+                ? contactInfoErrors?.name
+                : ""
+            }
           />
 
           <TextField
@@ -107,6 +218,12 @@ export default function AddContactDialog(props) {
             fullWidth
             variant="standard"
             onChange={handleContactInformationChange}
+            error={!isStringEmpty(contactInfoErrors?.address)}
+            helperText={
+              !isStringEmpty(contactInfoErrors?.address)
+                ? contactInfoErrors?.address
+                : ""
+            }
           />
 
           <TextField
@@ -118,6 +235,12 @@ export default function AddContactDialog(props) {
             fullWidth
             variant="standard"
             onChange={handleContactInformationChange}
+            error={!isStringEmpty(contactInfoErrors?.email)}
+            helperText={
+              !isStringEmpty(contactInfoErrors?.email)
+                ? contactInfoErrors?.email
+                : ""
+            }
           />
 
           {contactInfo.phone.map((x, i) => {
@@ -144,6 +267,14 @@ export default function AddContactDialog(props) {
                   sx={{ marginBottom: "10px" }}
                   onChange={(e) => handleContactListChange(e, i)}
                   key={i + "contactNumber"}
+                  error={
+                    !isStringEmpty(contactInfoErrors.phone?.[i]?.contactNumber)
+                  }
+                  helperText={
+                    !isStringEmpty(contactInfoErrors.phone?.[i]?.contactNumber)
+                      ? contactInfoErrors.phone?.[i]?.contactNumber
+                      : ""
+                  }
                 />
 
                 <TextField
@@ -199,7 +330,20 @@ export default function AddContactDialog(props) {
               marginLeft: "80px",
             }}
           >
-            <input type="file" onChange={fileSelectHandler} className="" />
+            <input type="file" onChange={fileSelectHandler} />
+            {!isStringEmpty(contactInfoErrors.photograph) ? (
+              <InputLabel
+                sx={{
+                  color: "#d32f2f",
+                  fontfamily: "Roboto Helvetica Arial sans-serif",
+                  fontWeight: "400",
+                  fontSize: "0.75rem",
+                  lineHeight: "1.66",
+                }}
+              >
+                {contactInfoErrors.photograph}
+              </InputLabel>
+            ) : null}
           </Box>
         </DialogContent>
 
