@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import Contact from "./Contact";
 import AddContactDialog from "./AddContactDialog";
 import EditContactDialog from "./EditContactDialog";
+import DeleteContactDialog from "./DeleteContactDialog";
 
 import Navbar from "../commons/Navbar";
 import FloatingActionButton from "../commons/FloatingActionButton";
@@ -15,6 +16,7 @@ import config from "../config";
 
 import {
   editContact,
+  deleteContact,
   fetchAllContacts,
   fetchAllContactsType,
   postContact,
@@ -24,10 +26,14 @@ export default function ContactMainPage() {
   const [contacts, setContacts] = useState([]);
 
   const editDialogId = useRef("");
+  const deleteDialogId = useRef("");
 
   const [contactNumbersType, setContactNumbersType] = useState([]);
   const [isContactsLoading, setLoading] = useState(false);
+
   const [isAddDialogBoxOpened, toggleAddContactDialogBox] = useState(false);
+  const [isDeleteConfirmationOpened, toggleIsDeleteConfirmationOpened] =
+    useState(false);
   const [isEditDialogBoxOpened, toggleEditContactDialogBox] = useState(false);
 
   useEffect(() => {
@@ -115,6 +121,18 @@ export default function ContactMainPage() {
     }
   };
 
+  const onDeleteContact = async () => {
+    try {
+      await deleteContact(deleteDialogId.current);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      fetchAndSetContacts();
+      fetchAndSetContactNumbersType();
+      toggleIsDeleteConfirmationOpened(false);
+    }
+  };
+
   const openAddContactDialog = () => {
     toggleAddContactDialogBox(true);
   };
@@ -123,6 +141,16 @@ export default function ContactMainPage() {
     editDialogId.current = id;
 
     toggleEditContactDialogBox(true);
+  };
+
+  const openDeleteContactDialog = (id) => {
+    deleteDialogId.current = id;
+
+    toggleIsDeleteConfirmationOpened(true);
+  };
+
+  const closeConfirmationDialogue = () => {
+    toggleIsDeleteConfirmationOpened(false);
   };
 
   const onCloseContactDialog = () => {
@@ -155,6 +183,7 @@ export default function ContactMainPage() {
                 userName={contact?.name || ""}
                 displayedContactNumber={contact?.phone[0]?.contactNumber || ""}
                 onEdit={() => openEditContactDialog(contact._id)}
+                onDelete={() => openDeleteContactDialog(contact._id)}
               ></Contact>
             ))}
           </Grid>
@@ -179,6 +208,12 @@ export default function ContactMainPage() {
           isOpened={isEditDialogBoxOpened}
         />
       ) : null}
+
+      <DeleteContactDialog
+        isOpened={isDeleteConfirmationOpened}
+        handleClose={closeConfirmationDialogue}
+        onDelete={onDeleteContact}
+      />
 
       <FloatingActionButton onFloatingButtonClick={openAddContactDialog} />
     </div>
