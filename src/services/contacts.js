@@ -41,3 +41,9 @@ export const editContact = (contactInfo, id) => {
 
   return contactManagerPostHttp.put(url, contactInfo);
 };
+
+export const deleteContact = (id) => {
+  const url = endpoints.CONTACTS + id;
+
+  return contactManagerPostHttp.delete(url);
+};

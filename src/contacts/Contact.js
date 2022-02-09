@@ -6,7 +6,7 @@ import CardMedia from "@mui/material/CardMedia";
 
 import EditIcon from "@mui/icons-material/Edit";
 import Typography from "@mui/material/Typography";
-import FavoriteIcon from "@mui/icons-material/Favorite";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { IconButton } from "@mui/material";
 
 export default function Contact(props) {
@@ -38,8 +38,8 @@ export default function Contact(props) {
             <EditIcon />
           </IconButton>
 
-          <IconButton>
-            <FavoriteIcon />
+          <IconButton onClick={props.onDelete}>
+            <DeleteIcon />
           </IconButton>
         </CardActions>
       </Card>
