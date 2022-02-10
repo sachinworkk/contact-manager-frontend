@@ -1,13 +1,20 @@
 import axios from "axios";
 import jwt_decode from "jwt-decode";
 
-const API_URL = "http://localhost:8081/user/login";
+const LOGIN_URL = "http://localhost:8081/user/login";
+const SIGNUP_URL = "http://localhost:8081/user/signup";
 
 export const login = (loginInfo) => {
-  return axios.post(API_URL, loginInfo).then((res) => {
+  return axios.post(LOGIN_URL, loginInfo).then((res) => {
     if (res.data.token) {
       localStorage.setItem("key", JSON.stringify(res.data));
     }
+    return res.data;
+  });
+};
+
+export const signUp = (signUpInfo) => {
+  return axios.post(SIGNUP_URL, signUpInfo).then((res) => {
     return res.data;
   });
 };
